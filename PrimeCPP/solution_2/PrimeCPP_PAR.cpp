@@ -66,14 +66,51 @@ public:
         return (x<<n) | (x>>(32-n));
     }
 
+    static constexpr uint32_t buildSkipMask(size_t skip, size_t offset) 
+    {
+        uint32_t mask = 0;
+        for (size_t i = offset; i < 32; i += skip) {
+            mask |= (1u << i);
+        }
+        return ~mask;
+    }
+
     void setFlagsFalse(size_t n, size_t skip) 
     {
-        auto rolling_mask = ~uint32_t(1 << n % 32);
-        auto roll_bits = skip % 32;
-        while (n < arrSize) {
-            array[index(n)] &= rolling_mask;
-            n += skip;
-            rolling_mask = rol(rolling_mask, roll_bits);
+        if (skip <= 12) {
+            // For small skips, use pre-built mask approach
+            size_t word_idx = index(n);
+            size_t bit_pos = n % 32;
+            size_t curr_n = n;
+            
+            while (curr_n < arrSize) 
+            {
+                // Build mask for current word starting at bit_pos
+                uint32_t mask = buildSkipMask(skip, bit_pos);
+                
+                // Apply mask to current word
+                array[word_idx] &= mask;
+                
+                // Move to next word
+                size_t bits_remaining = 32 - bit_pos;
+                curr_n += ((bits_remaining + skip - 1) / skip) * skip;
+                
+                if (curr_n >= arrSize) break;
+                
+                word_idx = index(curr_n);
+                bit_pos = curr_n % 32;
+            }
+        } 
+        else 
+        {
+            // Original implementation for larger skips
+            auto rolling_mask = ~uint32_t(1 << (n % 32));
+            auto roll_bits = skip % 32;
+            while (n < arrSize) {
+                array[index(n)] &= rolling_mask;
+                n += skip;
+                rolling_mask = rol(rolling_mask, roll_bits);
+            }
         }
     }
     
