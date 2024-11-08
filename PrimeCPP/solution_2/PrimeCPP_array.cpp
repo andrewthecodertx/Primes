@@ -206,7 +206,7 @@ class prime_sieve
 
           // Following 2 lines added by rbergen to conform to drag race output format
           cout << "\n";
-          cout << "davepl_par;" << passes << ";" << duration << ";" << threads << ";algorithm=base,faithful=yes,bits=1\n";
+          cout << "davepl_array;" << passes << ";" << duration << ";" << threads << ";algorithm=base,faithful=yes,bits=1\n";
       }               
   
 };
